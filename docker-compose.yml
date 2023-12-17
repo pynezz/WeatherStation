@@ -12,7 +12,7 @@ services:
     image: eclipse-mosquitto
     ports:
       - "1883:1883"       # MQTT default port
-      - "9001:9001"       # MQTT over WebSockets (optional) - Not sure if I really need to expose these ports as it's talking to fastAPI -> Webapp
+      - "9001:9001"       # MQTT over WebSockets - Not sure if I really need to expose these ports as it's talking to fastAPI -> Webapp
     volumes:
       - mosquitto_data:/mosquitto/data
       - ./conf/mosquitto:/mosquitto/config
@@ -23,7 +23,7 @@ services:
   backend_app:
     build: ./backend
     volumes:
-      - ./data:/app/data  # Mount the data folder to the container
+      - ./data:/app/data  # Mount the data folder to the container, way to inspect the db
     networks:
       - weather_monitor
     depends_on:
