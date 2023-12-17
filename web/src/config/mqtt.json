@@ -1,0 +1,17 @@
+{
+	"mqtt": {
+		"port": 1883,
+		"subscriptions": [
+            "weather/data"
+		],
+		"publish": true,
+		"subscribe": true
+	},
+	"log": {
+		"logfile": {
+			"default": "log/log (date).log",
+			"lifo": "/log/log (date)_lifo.log"
+		},
+		"level": "info"
+	}
+}
