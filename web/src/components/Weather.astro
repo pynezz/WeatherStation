@@ -14,5 +14,6 @@ const weatherData = await fetchWeatherData();
 
 <!-- Render the component with server-side fetched data -->
 <div>
-  <WeatherWidget weatherData={weatherData.data} />
+  <WeatherWidget client:load/>
+  <!-- <WeatherWidget weatherData={weatherData.data} /> -->
 </div>
