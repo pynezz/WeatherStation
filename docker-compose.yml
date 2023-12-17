@@ -1,0 +1,68 @@
+version: '3'
+
+services:
+  weather_station:
+    build:
+      context: ./weather_station
+      dockerfile: Dockerfile
+    networks:
+      - weather_monitor
+
+  mqtt_broker:
+    image: eclipse-mosquitto
+    ports:
+      - "1883:1883"       # MQTT default port
+      - "9001:9001"       # MQTT over WebSockets (optional)
+    volumes:
+      - mosquitto_data:/mosquitto/data
+      - ./conf/mosquitto:/mosquitto/config
+      - mosquitto_log:/mosquitto/log
+    networks:
+      - weather_monitor
+
+  backend_app:
+    build: ./backend
+    volumes:
+      - ./data:/app/data  # Mount the data folder to the container
+    networks:
+      - weather_monitor
+    depends_on:
+      - mqtt_broker
+    ports:
+      - "5000:5000"       # Expose Fast API app on port 5000
+
+  frontend_app:
+    # build: ./frontend
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile
+    networks:
+      - weather_monitor
+    depends_on:
+      - backend_app
+    ports:
+      - "80:4321"         # Expose the app on port 80, from Astros standard port of 4321
+
+networks:
+  weather_monitor:
+    external: true
+
+volumes:
+  mosquitto_data:
+  # mosquitto_config:
+  mosquitto_log:
+  sql_data:
+
+
+# services:
+#   nginx:
+#     image: nginx:latest
+#     ports:
+#       - "80:80"
+#     volumes:
+#       - ./nginx.conf:/etc/nginx/nginx.conf
+#     depends_on:
+#       - frontend-app
+#       - backend-app
+#     networks:
+#       - weather_monitor

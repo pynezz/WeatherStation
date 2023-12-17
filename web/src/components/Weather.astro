@@ -1,0 +1,18 @@
+---
+// Import the SolidJS component
+import WeatherWidget from '../components/WeatherWidget.jsx';
+
+// Server-side fetch function
+async function fetchWeatherData() {
+  const response = await fetch('http://backend_app:5000/weather');
+  return response.ok ? response.json() : null;
+}
+
+// Fetch weather data server-side
+const weatherData = await fetchWeatherData();
+---
+
+<!-- Render the component with server-side fetched data -->
+<div>
+  <WeatherWidget weatherData={weatherData.data} />
+</div>
