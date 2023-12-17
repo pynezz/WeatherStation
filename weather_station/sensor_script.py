@@ -1,14 +1,23 @@
+# from websockets.server import serve
+# from websockets.sync.client import connect
+# import asyncio
 import paho.mqtt.client as mqtt
 import json
 import random
 import time
 from datetime import datetime
 
-
 # MQTT settings
 BROKER = 'mqtt_broker'  # MQTT broker address
 PORT = 1883
 TOPIC = 'weather/data'
+
+# WS_PORT = 9001
+
+
+# async def echo(websocket):
+#     async for message in websocket:
+#         await websocket.send(message)
 
 def publish_sensor_data(client):
     while True:
@@ -33,6 +42,9 @@ def publish_sensor_data(client):
         }                       # But I ain't got time for that
         payload = json.dumps(data)
         client.publish(TOPIC, payload)
+
+        # print("Sending Websockets")
+        # ws_send(payload)
 
         time.sleep(10)  # Publish 10 seconds
 
@@ -68,11 +80,22 @@ def get_temp_and_hum(month) -> (int, int, str):
     return temp, hum, season
 
 
+# def ws_send(data):
+#     with connect("ws://localhost:8765") as websocket:
+#         websocket.send(data)
+#         message = websocket.recv()
+#         print(f"Received: {message}")
+
 def main():
     client = mqtt.Client()
     client.connect(BROKER, PORT, 60)
     publish_sensor_data(client)
 
 
+#     async with serve(echo, BROKER, 9001):
+#         await asyncio.Future()  # run forever
+
+
 if __name__ == '__main__':
     main()
+    # asyncio.run(main())

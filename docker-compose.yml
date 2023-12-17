@@ -12,7 +12,7 @@ services:
     image: eclipse-mosquitto
     ports:
       - "1883:1883"       # MQTT default port
-      - "9001:9001"       # MQTT over WebSockets (optional)
+      - "9001:9001"       # MQTT over WebSockets (optional) - Not sure if I really need to expose these ports as it's talking to fastAPI -> Webapp
     volumes:
       - mosquitto_data:/mosquitto/data
       - ./conf/mosquitto:/mosquitto/config
@@ -29,10 +29,9 @@ services:
     depends_on:
       - mqtt_broker
     ports:
-      - "5000:5000"       # Expose Fast API app on port 5000
+      - "5000:5000"       # Expose Fast API app on port 5000 - for testing purposes
 
   frontend_app:
-    # build: ./frontend
     build:
       context: .
       dockerfile: ./frontend/Dockerfile
@@ -52,17 +51,3 @@ volumes:
   # mosquitto_config:
   mosquitto_log:
   sql_data:
-
-
-# services:
-#   nginx:
-#     image: nginx:latest
-#     ports:
-#       - "80:80"
-#     volumes:
-#       - ./nginx.conf:/etc/nginx/nginx.conf
-#     depends_on:
-#       - frontend-app
-#       - backend-app
-#     networks:
-#       - weather_monitor

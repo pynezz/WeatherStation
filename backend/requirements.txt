@@ -2,4 +2,6 @@ fastapi
 uvicorn[standard]
 paho-mqtt
 sqlalchemy
+sqlalchemy[async]
+aiosqlite
 databases[sqlite]

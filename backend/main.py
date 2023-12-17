@@ -1,126 +1,54 @@
-# #! /usr/bin/python3
-
-# import threading
-# from fastapi import FastAPI, BackgroundTasks
-# import paho.mqtt.client as mqtt
-# from database import SessionLocal, engine
-# from models import WeatherDataModel, WeatherData, Base
-# import json
-# import asyncio
-
-# from fastapi import Depends, FastAPI, HTTPException
-# from sqlalchemy.orm import Session
-
-# from . import crud, models, schemas
-# from .database import SessionLocal, engine
-
-
-# # Database initialization
-# # In your main.py, replace the incorrect line with the following:
-# models.Base.metadata.create_all(bind=engine)
-
-# # Dependency
-
-
-# def get_db():
-#     db = SessionLocal()
-#     try:
-#         yield db
-#     finally:
-#         db.close()
-
-# # WeatherDataModel.Base.metadata.create_all(bind=engine)
-
-# # MQTT settings
-# MQTT_BROKER = 'mqtt_broker'
-# MQTT_PORT = 1883
-# MQTT_TOPIC = 'weather/data'
-
-# # Start the MQTT subscription as a background task
-# # @app.on_event("startup")
-# # async def startup_event():
-# #     print("+ Service started")
-# #     BackgroundTasks().add_task(mqtt_subscribe)
-
-# app = FastAPI()
-
-# @app.post("/", response_model=schemas.)
-
-# @app.on_event("startup")
-# async def startup_event():
-#     print("+ Startup event")
-#     asyncio.create_task(mqtt_subscribe())
-
-
-# # REST API to fetch weather data
-# @app.get("/weather")
-# async def get_weather_data():
-#     print("+ GET request to /weather received")
-#     db = SessionLocal()
-#     try:
-#         return db.query(WeatherDataModel).all()
-#     finally:
-#         db.close()
-
-
-# def on_connect(client, userdata, flags, rc):
-#     if rc == 0:
-#         print(f"Connected to MQTT broker! {client}:{userdata}:{flags}:{rc}")
-#     else:
-#         print("Failed to connect, return code %d\n", rc)
-
-# # MQTT on_message callback
-# def on_message(client, userdata, message):
-#     print(f"Received message: {message.payload.decode()}")
-#     db = SessionLocal()
-#     try:
-#         data = json.loads(message.payload.decode())
-#         weather_data = WeatherDataModel(
-#             temperature=data['temperature'],
-#             humidity=data['humidity'],
-#             season=data['season'],
-#             # Add other fields as necessary
-#         )
-#         db.add(weather_data)
-#         db.commit()
-#         print("Data committed to the database")
-#     except Exception as e:
-#         print(f"Error: {e}")
-#     finally:
-#         db.close()
-
-# async def mqtt_subscribe():
-#     print("Starting MQTT subscription...")
-#     try:
-#         client = mqtt.Client()
-#         client.on_connect = on_connect
-#         client.on_disconnect = on_disconnect
-#         client.on_message = on_message
-#         client.connect(MQTT_BROKER, MQTT_PORT, 60)
-
-#         # Run the loop in a separate thread
-#         thread = threading.Thread(target=client.loop_forever)
-#         thread.start()
-#         print("MQTT loop fucking started!!")
-#     except Exception as e:
-#         print(f"Error in MQTT subscription fuckface: {e}")
-
-
-# def on_disconnect(client, userdata, rc):
-#     print("Disconnected from MQTT Broker")
-
+import asyncio
 import json
 from database import SessionLocal
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket
 from sqlalchemy import create_engine, MetaData, Table, Column, String, Integer, Float
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.future import select
 import paho.mqtt.client as mqtt
 import threading
 
 from fastapi.middleware.cors import CORSMiddleware
 
+async_engine = create_async_engine('sqlite+aiosqlite:///./weather_data.db')
+async_session = sessionmaker(
+    async_engine, expire_on_commit=False, class_=AsyncSession
+)
 
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
+)
+
+async def get_latest_data():
+    async with async_session() as session:
+        result = await session.execute(select(WeatherData).order_by(WeatherData.id.desc()).limit(1))
+        latest_record = result.scalars().first()
+        return json.dumps({
+            "temperature": latest_record.temperature,
+            "humidity": latest_record.humidity,
+            "time": {
+                "month": latest_record.month,
+                "day": latest_record.day,
+                "hour": latest_record.hour,
+                "minute": latest_record.minute
+            },
+            "season": latest_record.season
+        })
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        data = await get_latest_data()  # Fetch the latest data from the database or MQTT
+        await websocket.send_text(data)
+        await asyncio.sleep(10)
 
 Base = declarative_base()
 
@@ -189,22 +117,11 @@ mqtt_client.on_connect = on_connect
 mqtt_client.on_message = on_message
 mqtt_client.connect(MQTT_BROKER, 1883, 60)
 
+# Added this now - haven't tested
+# mqtt_client.connect_async(MQTT_BROKER, 9001, 60) # How about this? Shouldn't I try to tell Mosquitto that FastAPI wants ws-data?
+
 # Start MQTT client in a separate thread
 threading.Thread(target=mqtt_client.loop_forever, daemon=True).start()
-
-# FastAPI app
-app = FastAPI()
-
-
-app.add_middleware(
-    CORSMiddleware,
-    # In production, specify your frontend's domain instead of '*'
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 
 
 @app.get("/weather")
