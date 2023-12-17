@@ -7,43 +7,52 @@ Docker containers:
       - Contains the weather station (Python script). Outputs data to the MQTT broker.
     - mqtt_broker: The MQTT broker that collects data
       - Broker: Eclipse Mosquitto
-    - backend
+    - backend_app
       - Database: SQLite
       - Framework: FastAPI
       - ORM: SQLAlchemy
       - Web server: Uvicorn
       - MQTT Client: paho-mqtt
-    - frontend
+    - frontend_app
+      - Node
       - Astro
+      - Solid.js
       - Tailwind
-
 
 **Data**: This folder contains the database for persistent storage between builds.
 **Web**: This folder contains the actual web application, developed on the host machine.
 
 ```txt
-WeatherStation/
-├── docker-compose.yml
-├── README.md
-├── backend/
-│   ├── database.py
-│   ├── Dockerfile
-│   ├── main.py
-│   ├── models.py
-│   └── requirements.txt
-├── conf/
-│    └── mosquitto/
-│         └── mosquitto.conf
-├── data/
-├── frontend/
-│    ├── .dockerignore
-│    ├── Dockerfile
-│    ├── tailwind.config.js
-│    └── src/
-├── weather_station
-│   ├── Dockerfile
-│   └── sensor_script.py
-└── web/
+ WeatherStation
+    ├── README.md
+    ├── backend
+    │   ├── Dockerfile
+    │   ├── database.py
+    │   ├── db
+    │   ├── main.py
+    │   ├── models.py
+    │   └── requirements.txt
+    ├── conf
+    │   └── mosquitto
+    ├── data
+    ├── docker-compose.yml
+    ├── frontend
+    │   ├── Dockerfile
+    │   ├── src
+    │   └── tailwind.config.js
+    ├── weather_station
+    │   ├── Dockerfile
+    │   └── sensor_script.py
+    └── web
+        ├── README.md
+        ├── astro.config.mjs
+        ├── node_modules
+        ├── package-lock.json
+        ├── package.json
+        ├── public
+        ├── src
+        ├── tailwind.config.mjs
+        └── tsconfig.json
 ```
 
 ## Weather station
